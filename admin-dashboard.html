@@ -1,0 +1,192 @@
+<!-- script by sabda_plays -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Discord Autoposter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blurple: #5865f2; --blurple-dark: #4752c4; --blurple-glow: rgba(88,101,242,0.3);
+      --bg: #0d0e11; --bg2: #13151a; --border: rgba(255,255,255,0.07);
+      --text: #f0f1f5; --text-muted: #7e8494; --red: #f23f43; --green: #23a55a;
+      --font: 'Inter', sans-serif; --font-head: 'Outfit', sans-serif;
+    }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 40px 20px;
+    }
+    .container { max-width: 750px; margin: 0 auto; }
+    .card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 30px; box-shadow: 0 24px 64px rgba(0,0,0,0.5); margin-bottom: 20px;
+    }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .title {
+      font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #a9aeff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+    .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 15px; }
+    .field label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    input {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 10px 14px; outline: none; width: 100%;
+    }
+    input:focus { border-color: var(--blurple); box-shadow: 0 0 0 3px rgba(88,101,242,0.15); }
+    .btn-primary {
+      background: var(--blurple); color: #fff; border: none; border-radius: 8px;
+      font-family: var(--font); font-size: 0.9rem; font-weight: 600; padding: 10px 20px;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px var(--blurple-glow); transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--blurple-dark); }
+    .btn-logout {
+      background: rgba(242,63,67,0.1); border: 1px solid rgba(242,63,67,0.3); color: var(--red);
+      border-radius: 8px; font-weight: 600; padding: 8px 14px; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(242,63,67,0.2); }
+    .btn-danger-sm {
+      background: rgba(242,63,67,0.1); border: 1px solid rgba(242,63,67,0.25); color: var(--red);
+      border-radius: 7px; font-size: 0.8rem; font-weight: 600; padding: 6px 12px; cursor: pointer;
+    }
+    .token-list { max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
+    .token-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
+    .token-item:last-child { border-bottom: none; }
+    .token-text { font-family: monospace; word-break: break-all; margin-right: 15px; font-size: 0.85rem; }
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; }
+    .toast { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 0.85rem; color: var(--text); margin-top: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .toast.success { border-color: rgba(35,165,90,0.4); }
+    .toast.error { border-color: rgba(242,63,67,0.4); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Panel Validasi Token Baru -->
+    <div class="card">
+      <div class="header-row">
+        <div>
+          <h1 class="title">Validasi Token Baru</h1>
+          <p class="sub" style="margin-bottom:0;">Tambahkan token Discord agar bisa mengakses aplikasi</p>
+        </div>
+        <button class="btn-logout" id="btn-logout">Logout</button>
+      </div>
+      <div class="field" style="margin-top: 15px;">
+        <label>Token Discord</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="admin-new-token" placeholder="Paste token discord di sini...">
+          <button type="button" class="btn-primary" id="btn-admin-add-token">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daftar Token Tervalidasi -->
+    <div class="card">
+      <h1 class="title" style="font-size: 1.2rem; margin-bottom: 5px;">Daftar Token Tervalidasi</h1>
+      <p class="sub">Token yang aktif di dalam database</p>
+      <div class="token-list" id="admin-token-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    if (!sessionStorage.getItem('admin_token')) {
+      window.location.href = 'admin-login.html';
+    }
+
+    function toast(msg, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      sessionStorage.removeItem('admin_token');
+      window.location.href = 'admin-login.html';
+    });
+
+    async function loadTokens() {
+      try {
+        const res = await fetch('/api/admin/tokens');
+        const json = await res.json();
+        if (res.ok) {
+          const list = document.getElementById('admin-token-list');
+          list.innerHTML = '';
+          if (json.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">Belum ada token tervalidasi.</div>';
+            return;
+          }
+          json.forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'token-item';
+            const masked = t.token.substring(0, 25) + '...';
+            div.innerHTML = `
+              <span class="token-text" title="${t.token}">${masked}</span>
+              <button class="btn-danger-sm" onclick="removeToken('${t.token}')">Unvalidasi</button>
+            `;
+            list.appendChild(div);
+          });
+        }
+      } catch (err) {
+        toast('Gagal memuat daftar token.', 'error');
+      }
+    }
+
+    document.getElementById('btn-admin-add-token').addEventListener('click', async () => {
+      const tokenInput = document.getElementById('admin-new-token');
+      const token = tokenInput.value.trim();
+      if (!token) {
+        toast('Token tidak boleh kosong!', 'error');
+        return;
+      }
+      try {
+        const res = await fetch('/api/admin/tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+        if (res.ok) {
+          tokenInput.value = '';
+          toast('Token berhasil divalidasi!', 'success');
+          loadTokens();
+        } else {
+          toast('Gagal menambahkan token.', 'error');
+        }
+      } catch (err) {
+        toast('Terjadi kesalahan jaringan.', 'error');
+      }
+    });
+
+    async function removeToken(token) {
+      if (!confirm('Cabut validasi token ini?')) return;
+      try {
+        const res = await fetch('/api/admin/tokens', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+        if (res.ok) {
+          toast('Token berhasil di-unvalidasi!', 'success');
+          loadTokens();
+        } else {
+          toast('Gagal mencabut token.', 'error');
+        }
+      } catch (err) {
+        toast('Terjadi kesalahan jaringan.', 'error');
+      }
+    }
+
+    loadTokens();
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!-- script by sabda_plays -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Discord Autoposter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blurple: #5865f2; --blurple-dark: #4752c4; --blurple-glow: rgba(88,101,242,0.3);
+      --bg: #0d0e11; --bg2: #13151a; --border: rgba(255,255,255,0.07);
+      --text: #f0f1f5; --text-muted: #7e8494; --red: #f23f43;
+      --font: 'Inter', sans-serif; --font-head: 'Outfit', sans-serif;
+    }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 44px 40px; width: 100%; max-width: 460px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .login-title {
+      font-family: var(--font-head); font-size: 1.75rem; font-weight: 800; text-align: center;
+      margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a9aeff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .login-sub { font-size: 0.88rem; color: var(--text-muted); text-align: center; margin-bottom: 32px; }
+    .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+    .field label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    input {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 10px 14px; outline: none; width: 100%;
+    }
+    input:focus { border-color: var(--blurple); box-shadow: 0 0 0 3px rgba(88,101,242,0.15); }
+    .btn-primary {
+      background: var(--blurple); color: #fff; border: none; border-radius: 10px;
+      font-family: var(--font); font-size: 0.93rem; font-weight: 600; padding: 12px 22px;
+      cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px var(--blurple-glow); transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--blurple-dark); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; font-weight: 600; padding: 10px; cursor: pointer; width: 100%; margin-top: 10px; text-align: center; display: block; text-decoration: none;
+    }
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; }
+    .toast { background: var(--bg2); border: 1px solid rgba(242,63,67,0.4); border-radius: 10px; padding: 12px 18px; font-size: 0.85rem; color: var(--text); margin-top: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1 class="login-title">Admin Login</h1>
+    <p class="login-sub">Masukkan password admin (sabda2011)</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label>Password Admin</label>
+        <input type="password" id="admin-password" placeholder="Masukkan password..." required>
+      </div>
+      <button type="submit" class="btn-primary">Login Admin</button>
+      <a href="/" class="btn-secondary">Kembali ke Aplikasi</a>
+    </form>
+  </div>
+  <div id="toast-container"></div>
+  <script>
+    function toast(msg) {
+      const c = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+    document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById('admin-password').value.trim();
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+          sessionStorage.setItem('admin_token', json.token);
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          toast(json.error || 'Password salah!');
+        }
+      } catch(err) {
+        toast('Kesalahan jaringan atau server belum siap.');
+      }
+    });
+  </script>
+</body>
+</html>
